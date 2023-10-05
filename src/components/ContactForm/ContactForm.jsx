@@ -1,16 +1,17 @@
 import { nanoid } from 'nanoid';
 import { Form, Container, Label, Input, Button } from './ContactForm.styled';
-import { useDispatch, useSelector } from 'react-redux';
-import { addContact } from 'components/redux/operations';
-import { selectContacts } from 'components/redux/selectors';
 import { useState } from 'react';
+import {
+  useGetContactsQuery,
+  useAddContactMutation,
+} from 'components/redux/contactApi';
 
 const ContactForm = () => {
   const [name, setName] = useState('');
   const [number, setNumber] = useState('');
 
-  const contacts = useSelector(selectContacts);
-  const dispatch = useDispatch();
+  const { data: contacts } = useGetContactsQuery();
+  const [addContact] = useAddContactMutation();
 
   const nameInputId = nanoid();
   const telInputId = nanoid();
@@ -29,7 +30,7 @@ const ContactForm = () => {
     }
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault();
 
     const existingContact = contacts.find(contact => contact.name === name);
@@ -37,8 +38,13 @@ const ContactForm = () => {
       alert(`${name} is already in contacts`);
       return;
     }
+    try {
+      await addContact({ name, number });
+    } catch (error) {
+      alert('Could not add the contact');
+      return;
+    }
 
-    dispatch(addContact({ name, number }));
     setName('');
     setNumber('');
   };
